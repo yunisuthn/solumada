@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>PDF Redactor</title>
+    <!-- <link rel="stylesheet" href="css/bootstrap.min.css"> -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/_style.css">
+    <link rel="stylesheet" href="css/all.min.css">
+</head>
+
+<body>
+    <!-- partial:index.partial.html -->
+    <div id='stars'></div>
+    <div id='stars2'></div>
+    <div id='stars3'></div>
+    <div class="form-container">
+        <form action="/fileupload" method="post" id="myForm" enctype="multipart/form-data">
+            <div class="container-fluid">
+                <div class="form align-center">
+                    <div class="title">
+                        <h2><strong class="pdf">PDF</strong> Redactor</h2>
+                        <p class="text-center">Traitement en cours...</p>
+                    </div>
+                    <br>
+                    <div class="text-center inputs">
+                        <!-- <form action="/cancel" method="post">
+                    <button type="submit" id="cancelRedactFile" name="btn3" class="launchButton">Annuler le traitement</button>
+                </form> -->
+                    </div>
+                    <br>
+                    <div class="text-center my-4">
+                        <p class="text-white"><span id="fileRedacted"></span><span id="fileNumber"></span></p>
+                    </div>
+                    <br>
+                    <div class='load-container'></div>
+                    <div id="prog"></div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <script type="text/javascript" src="js/read.js">
+    </script>
+    <script src='js/jquery.min.js'></script>
+</body>
+
+</html>

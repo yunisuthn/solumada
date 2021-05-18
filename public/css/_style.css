@@ -1,0 +1,228 @@
+* {
+  margin: 0;
+  padding: 0;
+  color: white;
+  font: 16px 'century gothic';
+}
+
+body {
+  background: rgb(30, 45, 70);
+  min-height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+}
+.pdf {
+  color: rgb(94, 153, 241);
+  font: 45px 'Franklin gothic';
+}
+.title > h2 {
+  text-align: center;
+  padding: 6px 0;
+  margin-bottom: 10px;
+  font-weight: 500;
+  font: 45px 'Franklin gothic';
+}
+.title > p {
+  font: 16px 'calibri light';
+  color: #f5f5f5;
+}
+.fileNameField {
+  text-align: center;
+  margin: 30px 0;
+}
+.fileNameField > p {
+  color: rgb(223, 223, 223) !important;
+  font: 15px 'Tahoma';
+}
+.selectedFileName {
+  color: #f5f5f5 !important;
+  font: 15px 'Segoe UI';
+}
+.form-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 10px 8px;
+  height: 220px;
+}
+  .inputs > input {
+  display: flex;
+  margin: 14px auto;
+}
+.text-center {
+  text-align: center;
+}
+
+.custom-inputFile {
+  position: absolute;
+  visibility: hidden;
+}
+.select-button {
+outline: none;
+font-weight: bold;
+text-transform: uppercase;
+font: 19px 'times new roman';
+text-align: center;
+display: inline-block;
+background:  #f9f9f9;
+border: none;
+border-radius: 3px;
+padding: 10px 6px;
+outline: none;
+white-space: nowrap;
+-webkit-user-select: none;
+cursor: pointer;
+color: rgb(16, 28, 61);
+}
+
+.custom-button {
+  background: linear-gradient(top, #f9f9f9, #e3e3e3);
+  border: 1px solid #999;
+  border-radius: 3px;
+  padding: 5px 6px;
+}
+.finished {
+  opacity: 0;
+  font-weight: bold;
+  font-size: 13px;
+  animation: fadeIn 0.6s forwards;
+  transition: 0.2s all ease;
+  text-align: center;
+}
+.launchButton {
+  color: rgb(9, 16, 39);
+  text-transform: uppercase;
+  border-radius: 6px;
+  padding: 5px 12px;
+  background: white;
+  border: 1px solid;
+  transition: all 0.3s ease;
+}
+.launchButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgb(243, 243, 243);
+  border-color: white;
+  cursor: pointer;
+}
+i {
+  color: black;
+}
+#uploadFile{
+  margin-top: 20px;
+  margin-bottom: 30px;
+}
+.finished > p {
+color: #f5f5f5;
+}
+
+@keyframes fadeIn {
+0% {
+  opacity: 0;
+  font-size: 14px;
+}
+25% {
+  opacity: 0.2;
+  font-size: 15px;
+}
+50% {
+  opacity: 0.5;
+  font-size: 16px;
+}
+75% {
+  opacity: 0.7;
+  font-size: 17px;
+}
+100% {
+  opacity: 1;
+  font-size: 18px;
+}
+}
+
+
+/* progress */
+
+progress {
+  vertical-align: baseline;
+}
+
+@-webkit-keyframes progress-bar-stripes {
+  from {
+    background-position: 1rem 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+
+@keyframes progress-bar-stripes {
+  from {
+    background-position: 1rem 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+
+.progress {
+  display: -ms-flexbox;
+  display: flex;
+  height: 1rem;
+  overflow: hidden;
+  font-size: 0.75rem;
+  background-color: #e9ecef;
+  border-radius: 0.25rem;
+}
+
+.progress-bar {
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  -ms-flex-pack: center;
+  justify-content: center;
+  color: #fff;
+  text-align: center;
+  white-space: nowrap;
+  background-color: #007bff;
+  transition: width 0.6s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progress-bar {
+    transition: none;
+  }
+}
+
+.progress-bar-striped {
+  background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent);
+  background-size: 1rem 1rem;
+}
+
+.progress-bar-animated {
+  -webkit-animation: progress-bar-stripes 1s linear infinite;
+  animation: progress-bar-stripes 1s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progress-bar-animated {
+    -webkit-animation: none;
+    animation: none;
+  }
+}
+.charging {
+  overflow: hidden;
+  color: rgb(214, 214, 214) !important;
+}
+.charging::before {
+  content: 'Chargement des fichiers';
+  font: 15px 'Segoe UI';
+  animation: charge 2s infinite;
+  transition: all ease 0.5s;
+}
+@keyframes charge {
+  0% {content: "Chargement des fichiers"}
+  25% {content: "Chargement des fichiers."}
+  50% {content: "Chargement des fichiers.."}
+  100% {content: "Chargement des fichiers..."}
+}

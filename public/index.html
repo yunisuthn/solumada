@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>PDF Redactor</title>
+    <!-- <link rel="stylesheet" href="css/bootstrap.min.css"> -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/_style.css">
+    <link rel="stylesheet" href="css/all.min.css">
+</head>
+
+<body>
+    <!-- partial:index.partial.html -->
+    <div id='stars'></div>
+    <div id='stars2'></div>
+    <div id='stars3'></div>
+    <div class="form-container">
+        <form action="/fileupload" method="post" id="myForm" enctype="multipart/form-data">
+            <div class="container-fluid">
+                <div class="form align-center">
+                    <div class="title">
+                        <h2><strong class="pdf">PDF</strong> Redactor</h2>
+                        <p class="text-center">Veuillez choisir une répertoire contenant un ou des fichiers PDF.</p>
+                    </div>
+                    <div class="text-center inputs">
+                        <input type="button" class="select-button" value="SELECTIONNER UN DOSSIER">
+                        <input type="file" id="uploadFile" name="filetoupload" class="custom-inputFile" webkitdirectory directory multiple>
+                        <button id="redactFile" name="btn1" class="launchButton" style="display:none;">Démarrer le traitement</button>
+                    </div>
+                    <div class="fileNameField">
+                        <p style="display:none;">Fichier : <span class="selectedFileName">Aucun fichier</span></p s>
+                    </div>
+                    <div class="charging text-center" style="display: none;"></div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <script src='js/jquery.min.js'></script>
+    <script type='text/javascript'>
+        (function() {
+            const selectedFileName = document.querySelector('.selectedFileName');
+            const fileNameField = document.querySelector('.fileNameField > p');
+            const inputFile = document.querySelector('#uploadFile');
+            const redactButton = document.querySelector('#redactFile');
+            const buttonSelect = document.querySelector('.select-button');
+            buttonSelect.addEventListener('click', function(e) {
+                inputFile.click();
+                e.preventDefault();
+            });
+            var active_button = false;
+            activeButtons(active_button);
+            // event listener
+            inputFile.addEventListener('change', function() {
+                let countPDF = 0;
+                active_button = false;
+                Array.from(inputFile.files).forEach(function(file) {
+                    countPDF += (file.type === 'application/pdf') ? 1 : 0;
+                });
+                if (countPDF > 1500) alert(`Le nombre de fichiers doit être inférieur à ou égal 1500.`);
+                else if (countPDF == 0) alert(`Il n'y a aucun fichier pdf dans ce dossier`);
+                else {
+                    selectedFileName.textContent = `${countPDF} fichiers.`;
+                    localStorage.setItem('selected_file_number', JSON.stringify(countPDF));
+                    active_button = true;
+                }
+                activeButtons(active_button);
+            });
+            // traitement event listener
+            redactButton.addEventListener('click', function() {
+                active_button = !active_button;
+                activeButtons(active_button);
+                document.querySelector('.charging').style.display = 'block';
+            });
+
+            function activeButtons(boolean) {
+                redactButton.style.display = !boolean ? 'none' : 'inline';
+                fileNameField.style.display = !boolean ? 'none' : 'inline';
+            }
+        })();
+    </script>
+</body>
+
+</html>
