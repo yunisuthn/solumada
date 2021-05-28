@@ -35,6 +35,5 @@
     }, 1000);
 })();
 const returnToIndex = function() {
- 
-    return window.location = '/';
+    return window.location='/option'
 }

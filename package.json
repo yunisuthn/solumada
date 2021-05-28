@@ -17,6 +17,7 @@
     "brfs": "^2.0.2",
     "browserfs": "^1.4.3",
     "browserify-fs": "^1.0.0",
+    "content-disposition": "^0.5.3",
     "ejs": "^3.1.6",
     "express": "^4.17.1",
     "formidable": "^1.2.2",
@@ -30,6 +31,7 @@
     "phantomjs-prebuilt": "^2.1.16",
     "request": "^2.88.2",
     "requirejs": "^2.3.6",
-    "sqlite": "^4.0.23"
+    "sqlite": "^4.0.23",
+    "zip-dir": "^2.0.0"
   }
 }
