@@ -1,9 +1,10 @@
 //Declaration et initialisation de tout les modules a utiliser dans le programmes
-var http = require('http');
-var formidable = require('formidable');
-var fs = require('fs');
-var path = require('path');
-var extra_fs = require('fs-extra');
+const http = require('http');
+const formidable = require('formidable');
+const fs = require('fs');
+const path = require('path');
+const extra_fs = require('fs-extra');
+
 //Declaration des variables globales
 var FILE_NAME = ''; //variable pour stocker le nom de fichier a traiter
 var OUTPUT_FILE_NAME = ''; //variable pour stocker le nom de fichier traiter qui sort dans le dossier redacted files
@@ -13,15 +14,20 @@ var pdfpath_redacted; // variable pour le nom de chaque fichier traités + le mo
 var pdfpath_clickable; // variable pour le nom de chaque fichier traités + le mot clickable
 var Time = 0; //Variable time pour un time quoi
 var numBtn = 1; //Variable numbtn a utiliser pour le numero de button (a voir dans la fonction button_redacted)
-var redacted_files_directory = "./redacted_files"; //variable pour le dossier a vider a chaque fois que le programme commence a traiter un dossier selectionné
-var clickable_files_directory = "./clickable_files"; //variable pour le dossier a vider a chaque fois que le programme commence a traiter un dossier selectionné
+var dir_home = process.env [process.platform =="win32"?"USERPROFILE":"HOME"];
+var dir_desktop = require("path").join(dir_home, "Desktop","Download");
 
+var redacted_files_directory = require("path").join(dir_home, "Desktop","Redacted");; //variable pour le dossier a vider a chaque fois que le programme commence a traiter un dossier selectionné
+var clickable_files_directory = require("path").join(dir_home, "Desktop","Clickable");; //variable pour le dossier a vider a chaque fois que le programme commence a traiter un dossier selectionné
+const PORT = process.env.PORT || 8080
 // fonction pour ecrire dans un fichier progress.txt (utile pour le loading sur l'interface)
 function progress(value) {
     let fs = require('fs');
     return fs.writeFileSync('./public/progress.txt', `${value}`);
 }
+
 http.createServer(function(req, res) {
+   
     //Quand l'utilisateur click sur le bouton traitement l'url / fileupload va etre demander
     if (req.url == '/fileupload') {
         // variables à reinitialiser
@@ -54,22 +60,25 @@ http.createServer(function(req, res) {
                     for (let file of selected_files) {
                         if (file !== undefined) {
                             setTimeout(async() => {
-
+                                
                                 let arr = file.name.split('/');
                                 FILE_NAME = arr[arr.length - 1];
                                 OUTPUT_FILE_NAME = FILE_NAME.split('.pdf')[0] + '_redacted.pdf';
                                 OUTPUT_FILE_NAME_CLICK = FILE_NAME.split('.pdf')[0] + '_clickable.pdf';
-                                pdfpath_redacted = `./redacted_files/${OUTPUT_FILE_NAME}`;
-                                pdfpath_clickable = `./clickable_files/${OUTPUT_FILE_NAME_CLICK}`;
+                                pdfpath_redacted = path.join(redacted_files_directory,OUTPUT_FILE_NAME)
+                                pdfpath_clickable = path.join(clickable_files_directory,OUTPUT_FILE_NAME_CLICK);
+                                
                                 await create_redaction(file.path); //une fonction pour traiter un fichier
+                               
                             }, Time); //Une fonction setTimeout de 10 seconde pour s'assurrer que le traitement du fichier soit bien fini (un fichier = 20 seconde)
                             //NB: Sur cette fonction si un ou plusieurs fichiers presente des champs non traitéés, il faudra augmenter le time
                             Time += 20000;
                         }
+                        
                     }
                     let current_nbr_file = 0; //variable pour compter les fichiers deja traites
                     const counter = setInterval(() => {
-                        fs.readdir('./clickable_files', function(err, files) {
+                        fs.readdir(redacted_files_directory, function(err, files) {
                             if (files.length != current_nbr_file) {
                                 console.log(files.length + (!(files.length > 1) ? ' fichier traité' : ' fichiers traités'));
                                 progress(files.length); //Ecrire le nombre de fichier traités dans progress.txt
@@ -79,8 +88,9 @@ http.createServer(function(req, res) {
                                 clearInterval(counter);
                                 console.log('** Redaction terminée... **');
                             }
-                        });
+                        });  
                     }, 1000);
+                   
                 }
             }
         });
@@ -89,7 +99,7 @@ http.createServer(function(req, res) {
         res.writeHead(200, { 'content-type': 'text/plain' });
         fs.readFile('./public/progress.txt', 'utf8', function(err, data) {
             if (err) {
-                return console.log(err);
+                return console.log("err1 == ",err);
             } else {
                 res.writeHeader(200, { "Content-Type": "text/plain" });
                 res.write(data);
@@ -133,7 +143,9 @@ http.createServer(function(req, res) {
             fileStream.pipe(res);
         }
     }
-}).listen(8080); // port pour appeler le serveur app.js
+   
+   
+}).listen(PORT); // port pour appeler le serveur app.js
 
 // PDF REDACTION
 const { PDFNet } = require('@pdftron/pdfnet-node');
@@ -143,52 +155,11 @@ async function create_redaction(pdffile) {
     //Pattern1 : pattern pour le numero de telephone en Belgique
     let pattern1 = "[+]3{1}2{1}+[ ]{0,1}+[.]{0,1}+[-]{0,1}+\\d{1}+[ ]{0,1}+[.]{0,1}+[-]{0,1}+\\d{3}+[ ]{0,1}+[-]{0,1}+[.]{0,1}+\\d{2}+[ ]{0,1}+[.]{0,1}+[-]{0,1}+\\d{2}+\\d{0,1}";
     await search_redact(pattern1);
+    
     //Pattern2 : pattern pour l'email 
     let pattern2 = "[a-zA-Z0-9._%+-]+[a-zA-Z0-9._%+-]+@[A-z]+[a-zA-Z0-9._%+-]+[a-zA-Z]";
     await search_redact(pattern2);
-    //Connection a la base de donnée
-    // var con = mysql.createConnection({
-    //     host: 'localhost',
-    //     user: 'root',
-    //     password: '',
-    //     database: 'solumada'
-    // });
-    // // Parcourir le table name et matchés chaque nom dans la base de donnee avec le contenu du pdf
-    // con.connect(function(err) {
-    //     if (err) throw err;
-    //     let sql = "SELECT * FROM name";
-    //     con.query(sql, (err, result) => {
-    //         if (err) throw err;
-    //         result.forEach(async r => {
-    //             if (r.noms.length !== 0) await search_redact(r.noms);
-    //         });
-    //     });
-    //     // Parcourir le table first_name et matchés chaque prenom dans la base de donnee avec le contenu du pdf
-    //     sql = "SELECT * FROM first_name";
-    //     con.query(sql, (err, result) => {
-    //         if (err) throw err;
-    //         result.forEach(async r => {
-    //             if (r.prenoms.length !== 0) await search_redact(r.prenoms);
-    //         });
-    //     });
-    //     // Parcourir le table street et matchés chaque nom de Rue dans la base de donnee avec le contenu du pdf
-    //     sql = "SELECT * FROM street";
-    //     con.query(sql, (err, result) => {
-    //         if (err) throw err;
-    //         result.forEach(async r => {
-    //             if (r.rue.length !== 0) await search_redact(r.rue);
-    //         });
-    //     });
-    //     // Parcourir le table town et matchés chaque Ville et code postale dans la base de donnee avec le contenu du pdf
-    //     sql = "SELECT * FROM town";
-    //     con.query(sql, (err, result) => {
-    //         if (err) throw err;
-    //         result.forEach(async r => {
-    //             if (r.ville.length !== 0) await search_redact(r.ville);
-    //         });
-    //     });
-    //     con.end();
-    // });
+    
     var inputPath_redacted = pdffile; // pdf a chercher
     var inputPath_clickable = pdffile; // pdf a chercher
     //Fonction pour chercher un mot dans le pdf
@@ -235,7 +206,7 @@ async function create_redaction(pdffile) {
                     result = await txtSearch.run();
                 }
             } catch (err) {
-                console.log(err);
+                console.log("err2 == ",err);
             }
             //Fonction pour redacter
             function redact_create(x1, y1, x2, y2, page_num) {
@@ -259,16 +230,21 @@ async function create_redaction(pdffile) {
                                 // output
                                 await doc.save(pdfpath_redacted, PDFNet.SDFDoc.SaveOptions.e_linearized);
                                 inputPath_redacted = pdfpath_redacted;
+                                
                             } catch (err) {
-                                console.log(err.stack);
+                                console.log("err3 == ",err.stack);
                             }
+                            
                         };
+                        
                         // add your own license key as the second parameter, e.g. PDFNet.runWithCleanup(main, 'YOUR_LICENSE_KEY')
                         PDFNet.runWithCleanup(main).then(function() { PDFNet.shutdown(); });
                     };
                     exports.runPDFRedactTest();
                 })(exports);
+                
             }
+            
             // Fonction pour creer un bouton
             function button_create(x1, y1, x2, y2, page_num) {
                 ((exports) => {
@@ -291,10 +267,9 @@ async function create_redaction(pdffile) {
 
                                 numBtn++;
                                 await doc.save(pdfpath_clickable, PDFNet.SDFDoc.SaveOptions.e_linearized);
-
                                 inputPath_clickable = pdfpath_clickable;
                             } catch (err) {
-                                console.log(err.stack);
+                                console.log("err4 == ",err.stack);
                                 ret = 1;
                             }
                         };
@@ -304,11 +279,23 @@ async function create_redaction(pdffile) {
                     exports.runPDFRedactTest();
                 })(exports);
             }
+            
         }
         PDFNet.runWithCleanup(main).catch((err) => {
-            console.log(err);
+            console.log("err5 == ",err);
         }).then(() => {
             PDFNet.shutdown();
         });
+        
     }
+    const express=require('express')
+    app = express()
+    app.get('/', function (req, res) {
+        console.log('Ici')
+      })
+    
+
+    console.log(OUTPUT_FILE_NAME)
+    console.log(OUTPUT_FILE_NAME_CLICK)
 }
+
