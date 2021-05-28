@@ -1,29 +1,35 @@
 {
-  "name": "pdftron",
+  "name": "v2",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "",
+  "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon app.js"
   },
+  "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@pdftron/pdfnet-node": "^8.1.0",
+    "@pdftron/pdfnet-node": "^9.0.0-3",
+    "alert": "^5.0.10",
     "body-parser": "^1.19.0",
     "brfs": "^2.0.2",
     "browserfs": "^1.4.3",
     "browserify-fs": "^1.0.0",
-    "ejs": "^3.1.5",
+    "ejs": "^3.1.6",
     "express": "^4.17.1",
     "formidable": "^1.2.2",
-    "fs-extra": "^9.1.0",
-    "html-pdf": "^2.2.0",
+    "fs-extra": "^10.0.0",
+    "har-validator": "^5.1.5",
+    "html-pdf": "^3.0.1",
     "local-storage": "^2.0.0",
     "mysql": "^2.18.1",
-    "pdf-creator-node": "^2.2.2",
+    "nodemon": "^2.0.7",
+    "object-keys": "^0.4.0",
+    "phantomjs-prebuilt": "^2.1.16",
+    "request": "^2.88.2",
     "requirejs": "^2.3.6",
-    "sqlite": "^4.0.19"
-  },
-  "devDependencies": {},
-  "description": ""
+    "sqlite": "^4.0.23"
+  }
 }

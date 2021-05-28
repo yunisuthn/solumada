@@ -4,6 +4,8 @@ const formidable = require('formidable');
 const fs = require('fs');
 const path = require('path');
 const extra_fs = require('fs-extra');
+const os = require('os')
+const show = require('alert')
 
 //Declaration des variables globales
 var FILE_NAME = ''; //variable pour stocker le nom de fichier a traiter
@@ -14,14 +16,15 @@ var pdfpath_redacted; // variable pour le nom de chaque fichier traités + le mo
 var pdfpath_clickable; // variable pour le nom de chaque fichier traités + le mot clickable
 var Time = 0; //Variable time pour un time quoi
 var numBtn = 1; //Variable numbtn a utiliser pour le numero de button (a voir dans la fonction button_redacted)
-var dir_home = process.env [process.platform =="win32"?"USERPROFILE":"HOME"];
-var dir_desktop = require("path").join(dir_home, "Desktop","Download");
 
-var redacted_files_directory = require("path").join(dir_home, "Desktop","Redacted");; //variable pour le dossier a vider a chaque fois que le programme commence a traiter un dossier selectionné
-var clickable_files_directory = require("path").join(dir_home, "Desktop","Clickable");; //variable pour le dossier a vider a chaque fois que le programme commence a traiter un dossier selectionné
+
+var redacted_files_directory = "Downloads/redact"; //variable pour le dossier a vider a chaque fois que le programme commence a traiter un dossier selectionné
+var clickable_files_directory = "Downloads/Clickable"; //variable pour le dossier a vider a chaque fois que le programme commence a traiter un dossier selectionné
+
 const PORT = process.env.PORT || 8080
 // fonction pour ecrire dans un fichier progress.txt (utile pour le loading sur l'interface)
 function progress(value) {
+    show('pregress process')
     let fs = require('fs');
     return fs.writeFileSync('./public/progress.txt', `${value}`);
 }
@@ -40,7 +43,8 @@ http.createServer(function(req, res) {
         numBtn = 1;
         // Utilisation de module formidable pour prendre les fichier dans le dossier selectionnes
         let form = new formidable.IncomingForm();
-        form.on('file', function(field, file) {
+        form.on('file', function (field, file) {
+            
             //Insertion des fichiers pdf dans l'array selected_files
             if (file.type === 'application/pdf')
                 selected_files.push(file);
@@ -99,7 +103,7 @@ http.createServer(function(req, res) {
         res.writeHead(200, { 'content-type': 'text/plain' });
         fs.readFile('./public/progress.txt', 'utf8', function(err, data) {
             if (err) {
-                return console.log("err1 == ",err);
+                return console.log(err);
             } else {
                 res.writeHeader(200, { "Content-Type": "text/plain" });
                 res.write(data);
@@ -147,18 +151,32 @@ http.createServer(function(req, res) {
    
 }).listen(PORT); // port pour appeler le serveur app.js
 
+
+
 // PDF REDACTION
 const { PDFNet } = require('@pdftron/pdfnet-node');
 var mysql = require('mysql');
 const { Console } = require('console');
 async function create_redaction(pdffile) {
+    //pattern 6 : pattern numero 
+    let patternnum = "[0-9]{2}[ ][0-9]{2}[ ][0-9]{2}[ ][0-9]{2}[ ][0-9]{2}";
+    await search_redact(patternnum);
     //Pattern1 : pattern pour le numero de telephone en Belgique
     let pattern1 = "[+]3{1}2{1}+[ ]{0,1}+[.]{0,1}+[-]{0,1}+\\d{1}+[ ]{0,1}+[.]{0,1}+[-]{0,1}+\\d{3}+[ ]{0,1}+[-]{0,1}+[.]{0,1}+\\d{2}+[ ]{0,1}+[.]{0,1}+[-]{0,1}+\\d{2}+\\d{0,1}";
     await search_redact(pattern1);
-    
     //Pattern2 : pattern pour l'email 
     let pattern2 = "[a-zA-Z0-9._%+-]+[a-zA-Z0-9._%+-]+@[A-z]+[a-zA-Z0-9._%+-]+[a-zA-Z]";
     await search_redact(pattern2);
+    //Pattern 3 : pattern pour le numero tva
+    let pattern3 = "[A-Z]{2}[ ]{0,1}[0-9]{4}[^A-Za-z0-9_]{0,1}[0-9]{3}[^A-Za-z0-9_]{0,1}[0-9]{3}";
+    await search_redact(pattern3);
+    //Pattern 4: pattern pour le IBAN
+    let pattern4 = "[A-Z]{2}[0-9]{2}[ ]{0,1}[0-9]{4}[ ]{0,1}[0-9]{4}[ ][0-9]{4}[ ][A-Z0-9]{8}";
+    await search_redact(pattern4);
+    //Pattern 5 : pattern IBAN2
+    let pattern5 = "[A-Z]{2}[0-9]{14}";
+    await search_redact(pattern5);
+    
     
     var inputPath_redacted = pdffile; // pdf a chercher
     var inputPath_clickable = pdffile; // pdf a chercher
@@ -206,7 +224,7 @@ async function create_redaction(pdffile) {
                     result = await txtSearch.run();
                 }
             } catch (err) {
-                console.log("err2 == ",err);
+                console.log(err);
             }
             //Fonction pour redacter
             function redact_create(x1, y1, x2, y2, page_num) {
@@ -232,7 +250,7 @@ async function create_redaction(pdffile) {
                                 inputPath_redacted = pdfpath_redacted;
                                 
                             } catch (err) {
-                                console.log("err3 == ",err.stack);
+                                console.log(err.stack);
                             }
                             
                         };
@@ -269,7 +287,7 @@ async function create_redaction(pdffile) {
                                 await doc.save(pdfpath_clickable, PDFNet.SDFDoc.SaveOptions.e_linearized);
                                 inputPath_clickable = pdfpath_clickable;
                             } catch (err) {
-                                console.log("err4 == ",err.stack);
+                                console.log(err.stack);
                                 ret = 1;
                             }
                         };
@@ -282,7 +300,7 @@ async function create_redaction(pdffile) {
             
         }
         PDFNet.runWithCleanup(main).catch((err) => {
-            console.log("err5 == ",err);
+            console.log(err);
         }).then(() => {
             PDFNet.shutdown();
         });
