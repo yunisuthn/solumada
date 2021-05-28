@@ -4,8 +4,8 @@ const formidable = require('formidable');
 const fs = require('fs');
 const path = require('path');
 const extra_fs = require('fs-extra');
-const os = require('os')
-const show = require('alert')
+//const os = require('os')
+var contentDisposition = require('content-disposition')
 
 //Declaration des variables globales
 var FILE_NAME = ''; //variable pour stocker le nom de fichier a traiter
@@ -16,21 +16,41 @@ var pdfpath_redacted; // variable pour le nom de chaque fichier traités + le mo
 var pdfpath_clickable; // variable pour le nom de chaque fichier traités + le mot clickable
 var Time = 0; //Variable time pour un time quoi
 var numBtn = 1; //Variable numbtn a utiliser pour le numero de button (a voir dans la fonction button_redacted)
+// var dir_home = os.homedir()
+// var dir_desktop = path.join(dir_home, "Desktop","Download");
 
 
-var redacted_files_directory = "Downloads/redact"; //variable pour le dossier a vider a chaque fois que le programme commence a traiter un dossier selectionné
+
+var redacted_files_directory = "Downloads/Readact"; //variable pour le dossier a vider a chaque fois que le programme commence a traiter un dossier selectionné
+var zip_files_directory = "Downloads/zip"; //variable pour le dossier a vider a chaque fois que le programme commence a traiter un dossier selectionné
 var clickable_files_directory = "Downloads/Clickable"; //variable pour le dossier a vider a chaque fois que le programme commence a traiter un dossier selectionné
 
 const PORT = process.env.PORT || 8080
+
 // fonction pour ecrire dans un fichier progress.txt (utile pour le loading sur l'interface)
 function progress(value) {
-    show('pregress process')
     let fs = require('fs');
     return fs.writeFileSync('./public/progress.txt', `${value}`);
 }
 
-http.createServer(function(req, res) {
-   
+http.createServer(function (req, res) {
+    
+    if (req.url == '/option') {
+        //vider le dossier contenant les fichier zip a chaque actualisation de l'url /option
+        extra_fs.emptyDirSync(zip_files_directory)
+
+        //appel de librairie qui permet de creer les fichier zip a partir de dossier
+        var zipdir = require('zip-dir');
+        zipdir('Downloads/Clickable', { saveTo: 'Downloads/zip/Clickable.zip' }, function (err, buffer) {
+        });
+        zipdir('Downloads/Readact', { saveTo: 'Downloads/zip/Readact.zip' }, function (err, buffer) {
+        });
+        fs.readFile("./public/option.html", "UTF-8", function (err, data) {
+            res.writeHead(200, { 'Content-Type': 'text/html' });
+            res.end(data);
+        });
+
+    }
     //Quand l'utilisateur click sur le bouton traitement l'url / fileupload va etre demander
     if (req.url == '/fileupload') {
         // variables à reinitialiser
@@ -54,6 +74,7 @@ http.createServer(function(req, res) {
                 //Demarrage du traitement
                 extra_fs.emptyDirSync(redacted_files_directory); //Vidage du dossier redacted_files
                 extra_fs.emptyDirSync(clickable_files_directory); //Vidage du dossier clickables_files
+                
                 progress(0); //Ecrire 0 dans le fichier progress.txt
                 if (selected_files.length === 0) {
                     console.log('Aucun fichier PDF...')
@@ -98,7 +119,41 @@ http.createServer(function(req, res) {
                 }
             }
         });
-    } else if (req.method == 'GET' && req.url == '/progress.txt') {
+    }
+    //parcours du dossier
+    //downloading file process
+    else if (req.method=="GET" && req.url == '/downloadClick') {
+        var path_click = 'Downloads/zip/Clickable.zip'
+        // //Set require Header
+        // // Request headers you wish to allow
+        res.setHeader('Content-Type', 'application/zip')
+        res.setHeader('Content-Disposition', contentDisposition(path_click))
+        // // send file
+        var stream1 = fs.createReadStream(path_click)
+        stream1.pipe(res)
+        stream1.on('close', () => {
+            stream1.destroy()
+        })
+        res.writeHeader(200, { "Content-Type": "text/plain" });
+        res.write('File downloaded');
+    }
+    else if (req.method=="GET" && req.url == '/downloadRead') {
+
+        var path_readact = 'Downloads/zip/Readact.zip'
+        // //Set require Header
+        // // Request headers you wish to allow
+        res.setHeader('Content-Type', 'application/zip')
+        res.setHeader('Content-Disposition', contentDisposition(path_readact))
+        // // send file
+        var stream2 = fs.createReadStream(path_readact)
+        stream2.pipe(res)
+        stream2.on('close', () => {
+            stream2.destroy()
+        })
+        res.writeHeader(200, { "Content-Type": "text/plain" });
+        res.write('File downloaded');
+    }
+    else if (req.method == 'GET' && req.url == '/progress.txt') {
         //Ecrire ce qui est dans le fichier progress.txt pour l'interface load.html
         res.writeHead(200, { 'content-type': 'text/plain' });
         fs.readFile('./public/progress.txt', 'utf8', function(err, data) {
@@ -151,12 +206,11 @@ http.createServer(function(req, res) {
    
 }).listen(PORT); // port pour appeler le serveur app.js
 
-
-
 // PDF REDACTION
 const { PDFNet } = require('@pdftron/pdfnet-node');
 var mysql = require('mysql');
-const { Console } = require('console');
+const { Console, dir } = require('console');
+const { RSA_NO_PADDING } = require('constants');
 async function create_redaction(pdffile) {
     //pattern 6 : pattern numero 
     let patternnum = "[0-9]{2}[ ][0-9]{2}[ ][0-9]{2}[ ][0-9]{2}[ ][0-9]{2}";
@@ -176,6 +230,24 @@ async function create_redaction(pdffile) {
     //Pattern 5 : pattern IBAN2
     let pattern5 = "[A-Z]{2}[0-9]{14}";
     await search_redact(pattern5);
+    // //pattern 6 : pattern numero 
+    // let patternnum = "[0-9]{2}[ ][0-9]{2}[ ][0-9]{2}[ ][0-9]{2}[ ][0-9]{2}";
+    // await search_redact(patternnum);
+    // //Pattern1 : pattern pour le numero de telephone en Belgique
+    // let pattern1 = "[+]3{1}2{1}+[ ]{0,1}+[.]{0,1}+[-]{0,1}+\\d{1}+[ ]{0,1}+[.]{0,1}+[-]{0,1}+\\d{3}+[ ]{0,1}+[-]{0,1}+[.]{0,1}+\\d{2}+[ ]{0,1}+[.]{0,1}+[-]{0,1}+\\d{2}+\\d{0,1}";
+    // await search_redact(pattern1);
+    // //Pattern2 : pattern pour l'email 
+    // let pattern2 = "[a-zA-Z0-9._%+-]+[a-zA-Z0-9._%+-]+@[A-z]+[a-zA-Z0-9._%+-]+[a-zA-Z]";
+    // await search_redact(pattern2);
+    // //Pattern 3 : pattern pour le numero tva
+    // let pattern3 = "[A-Z]{2}[ ]{0,1}[0-9]{4}[^A-Za-z0-9_]{0,1}[0-9]{3}[^A-Za-z0-9_]{0,1}[0-9]{3}";
+    // await search_redact(pattern3);
+    // //Pattern 4: pattern pour le IBAN
+    // let pattern4 = "[A-Z]{2}[0-9]{2}[ ]{0,1}[0-9]{4}[ ]{0,1}[0-9]{4}[ ][0-9]{4}[ ][A-Z0-9]{8}";
+    // await search_redact(pattern4);
+    // //Pattern 5 : pattern IBAN2
+    // let pattern5 = "[A-Z]{2}[0-9]{14}";
+    // await search_redact(pattern5);
     
     
     var inputPath_redacted = pdffile; // pdf a chercher
@@ -248,7 +320,6 @@ async function create_redaction(pdffile) {
                                 // output
                                 await doc.save(pdfpath_redacted, PDFNet.SDFDoc.SaveOptions.e_linearized);
                                 inputPath_redacted = pdfpath_redacted;
-                                
                             } catch (err) {
                                 console.log(err.stack);
                             }

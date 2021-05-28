@@ -105,6 +105,21 @@ color: rgb(16, 28, 61);
   border-color: white;
   cursor: pointer;
 }
+.botaka {
+  color: rgb(9, 16, 39);
+  text-transform: uppercase;
+  border-radius: 6px;
+  padding: 5px 12px;
+  background: white;
+  border: 1px solid;
+  transition: all 0.3s ease;
+}
+.botaka:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgb(243, 243, 243);
+  border-color: white;
+  cursor: pointer;
+}
 i {
   color: black;
 }
