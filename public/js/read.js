@@ -35,5 +35,6 @@
     }, 1000);
 })();
 const returnToIndex = function() {
-    return window.location = 'http://localhost:8080/';
+ 
+    return window.location = '/';
 }
