@@ -230,26 +230,32 @@ async function create_redaction(pdffile) {
     //Pattern 5 : pattern IBAN2
     let pattern5 = "[A-Z]{2}[0-9]{14}";
     await search_redact(pattern5);
-    // //pattern 6 : pattern numero 
-    // let patternnum = "[0-9]{2}[ ][0-9]{2}[ ][0-9]{2}[ ][0-9]{2}[ ][0-9]{2}";
-    // await search_redact(patternnum);
-    // //Pattern1 : pattern pour le numero de telephone en Belgique
-    // let pattern1 = "[+]3{1}2{1}+[ ]{0,1}+[.]{0,1}+[-]{0,1}+\\d{1}+[ ]{0,1}+[.]{0,1}+[-]{0,1}+\\d{3}+[ ]{0,1}+[-]{0,1}+[.]{0,1}+\\d{2}+[ ]{0,1}+[.]{0,1}+[-]{0,1}+\\d{2}+\\d{0,1}";
-    // await search_redact(pattern1);
-    // //Pattern2 : pattern pour l'email 
-    // let pattern2 = "[a-zA-Z0-9._%+-]+[a-zA-Z0-9._%+-]+@[A-z]+[a-zA-Z0-9._%+-]+[a-zA-Z]";
-    // await search_redact(pattern2);
-    // //Pattern 3 : pattern pour le numero tva
-    // let pattern3 = "[A-Z]{2}[ ]{0,1}[0-9]{4}[^A-Za-z0-9_]{0,1}[0-9]{3}[^A-Za-z0-9_]{0,1}[0-9]{3}";
-    // await search_redact(pattern3);
-    // //Pattern 4: pattern pour le IBAN
-    // let pattern4 = "[A-Z]{2}[0-9]{2}[ ]{0,1}[0-9]{4}[ ]{0,1}[0-9]{4}[ ][0-9]{4}[ ][A-Z0-9]{8}";
-    // await search_redact(pattern4);
-    // //Pattern 5 : pattern IBAN2
-    // let pattern5 = "[A-Z]{2}[0-9]{14}";
-    // await search_redact(pattern5);
+    //patern numero CIN
+    const cin = "[0-9]{2}[.](?:1[0-2]|0[0-9]{1})[.](?:3[0-1]|0[1-9]{1}|2[0-9]{1})-[0-9]{3}[.][0-9]{2}"
+    await search_redact(cin);
+    // //identification passport
+    const passport = "\\b(?:[A-Z]{2}[0-9]{6})\\b"
+    await search_redact(passport);
+    //numero voiture
+    const numVoiture = "\\b(?:[1-8]{1}[-][A-Y]{1}[A-Z]{2}[-][0-9]{3})\\b"
+    await search_redact(numVoiture);
+    //NIV voiture
+    const nivVehicule = "\\b(?:(?:[0-9]|[A-H]|[J-N]|[P]|[R-Z]){8}(?:[0-9]|[X]){1}(?:[1-9]|[A-H]|[J-N]|[P]|[R-T]|[V-Y]){1}(?:[0-9]|[A-H]|[J-N]|[P]|[R-Z]){1}[0-9]{6})\\b"
+    await search_redact(nivVehicule);
+
     
+    //patern numero permis de conduire
+    const permis = "/[1-9]{2}[ .]{0,1}(?:1[0-2]|0[0-9]{1})[ .]{0,1}[0-9]{2}[ .]{0,1}[0-9]{2}[ .]{0,1}[0-9]{4}/g"
+    await search_redact(permis);
     
+    //identificaiton employer
+    const employer = "\\b(?:[1-9]{1}[0-9]{11})\\b"
+    await search_redact(employer);
+
+    //url patern
+    let url_patern = "(?:[https:\/\/www.|http:\/\/www.|https:\/\/|http:\/\/|www]+[.]+[a-zA-Z0-9._%+-\/]+[a-zA-Z0-9._%+-])"
+    await search_redact(url_patern);
+
     var inputPath_redacted = pdffile; // pdf a chercher
     var inputPath_clickable = pdffile; // pdf a chercher
     //Fonction pour chercher un mot dans le pdf
