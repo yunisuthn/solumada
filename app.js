@@ -4,7 +4,7 @@ const formidable = require('formidable');
 const fs = require('fs');
 const path = require('path');
 const extra_fs = require('fs-extra');
-//const os = require('os')
+const os = require('os')
 var contentDisposition = require('content-disposition')
 
 //Declaration des variables globales
@@ -16,8 +16,8 @@ var pdfpath_redacted; // variable pour le nom de chaque fichier traités + le mo
 var pdfpath_clickable; // variable pour le nom de chaque fichier traités + le mot clickable
 var Time = 0; //Variable time pour un time quoi
 var numBtn = 1; //Variable numbtn a utiliser pour le numero de button (a voir dans la fonction button_redacted)
-// var dir_home = os.homedir()
-// var dir_desktop = path.join(dir_home, "Desktop","Download");
+var dir_home = os.homedir()
+var dir_desktop = path.join(dir_home, "Desktop","Download");
 
 
 
@@ -25,8 +25,10 @@ var redacted_files_directory = "Downloads/Readact"; //variable pour le dossier a
 var zip_files_directory = "Downloads/zip"; //variable pour le dossier a vider a chaque fois que le programme commence a traiter un dossier selectionné
 var clickable_files_directory = "Downloads/Clickable"; //variable pour le dossier a vider a chaque fois que le programme commence a traiter un dossier selectionné
 
-const PORT = process.env.PORT || 8080
+// extra_fs.emptyDirSync(redacted_files_directory); //Vidage du dossier redacted_files
+// extra_fs.emptyDirSync(clickable_files_directory); //Vidage du dossier clickables_files
 
+const PORT = process.env.PORT || 8080
 // fonction pour ecrire dans un fichier progress.txt (utile pour le loading sur l'interface)
 function progress(value) {
     let fs = require('fs');
@@ -36,10 +38,8 @@ function progress(value) {
 http.createServer(function (req, res) {
     
     if (req.url == '/option') {
-        //vider le dossier contenant les fichier zip a chaque actualisation de l'url /option
         extra_fs.emptyDirSync(zip_files_directory)
 
-        //appel de librairie qui permet de creer les fichier zip a partir de dossier
         var zipdir = require('zip-dir');
         zipdir('Downloads/Clickable', { saveTo: 'Downloads/zip/Clickable.zip' }, function (err, buffer) {
         });
@@ -74,7 +74,8 @@ http.createServer(function (req, res) {
                 //Demarrage du traitement
                 extra_fs.emptyDirSync(redacted_files_directory); //Vidage du dossier redacted_files
                 extra_fs.emptyDirSync(clickable_files_directory); //Vidage du dossier clickables_files
-                
+                extra_fs.emptyDirSync(redacted_files_directory); //Vidage du dossier redacted_files
+                extra_fs.emptyDirSync(clickable_files_directory); //Vidage du dossier clickables_files
                 progress(0); //Ecrire 0 dans le fichier progress.txt
                 if (selected_files.length === 0) {
                     console.log('Aucun fichier PDF...')
@@ -208,54 +209,101 @@ http.createServer(function (req, res) {
 
 // PDF REDACTION
 const { PDFNet } = require('@pdftron/pdfnet-node');
-var mysql = require('mysql');
-const { Console, dir } = require('console');
-const { RSA_NO_PADDING } = require('constants');
 async function create_redaction(pdffile) {
-    //pattern 6 : pattern numero 
-    let patternnum = "[0-9]{2}[ ][0-9]{2}[ ][0-9]{2}[ ][0-9]{2}[ ][0-9]{2}";
+      //pattern 6 : pattern numero 
+      let patternnum =
+      {
+          name :"Numero",
+          patern :"[0-9]{2}[ ][0-9]{2}[ ][0-9]{2}[ ][0-9]{2}[ ][0-9]{2}"
+    }
     await search_redact(patternnum);
-    //Pattern1 : pattern pour le numero de telephone en Belgique
-    let pattern1 = "[+]3{1}2{1}+[ ]{0,1}+[.]{0,1}+[-]{0,1}+\\d{1}+[ ]{0,1}+[.]{0,1}+[-]{0,1}+\\d{3}+[ ]{0,1}+[-]{0,1}+[.]{0,1}+\\d{2}+[ ]{0,1}+[.]{0,1}+[-]{0,1}+\\d{2}+\\d{0,1}";
-    await search_redact(pattern1);
-    //Pattern2 : pattern pour l'email 
-    let pattern2 = "[a-zA-Z0-9._%+-]+[a-zA-Z0-9._%+-]+@[A-z]+[a-zA-Z0-9._%+-]+[a-zA-Z]";
-    await search_redact(pattern2);
-    //Pattern 3 : pattern pour le numero tva
-    let pattern3 = "[A-Z]{2}[ ]{0,1}[0-9]{4}[^A-Za-z0-9_]{0,1}[0-9]{3}[^A-Za-z0-9_]{0,1}[0-9]{3}";
-    await search_redact(pattern3);
-    //Pattern 4: pattern pour le IBAN
-    let pattern4 = "[A-Z]{2}[0-9]{2}[ ]{0,1}[0-9]{4}[ ]{0,1}[0-9]{4}[ ][0-9]{4}[ ][A-Z0-9]{8}";
-    await search_redact(pattern4);
-    //Pattern 5 : pattern IBAN2
-    let pattern5 = "[A-Z]{2}[0-9]{14}";
-    await search_redact(pattern5);
-    //patern numero CIN
-    const cin = "[0-9]{2}[.](?:1[0-2]|0[0-9]{1})[.](?:3[0-1]|0[1-9]{1}|2[0-9]{1})-[0-9]{3}[.][0-9]{2}"
-    await search_redact(cin);
-    // //identification passport
-    const passport = "\\b(?:[A-Z]{2}[0-9]{6})\\b"
-    await search_redact(passport);
-    //numero voiture
-    const numVoiture = "\\b(?:[1-8]{1}[-][A-Y]{1}[A-Z]{2}[-][0-9]{3})\\b"
-    await search_redact(numVoiture);
-    //NIV voiture
-    const nivVehicule = "\\b(?:(?:[0-9]|[A-H]|[J-N]|[P]|[R-Z]){8}(?:[0-9]|[X]){1}(?:[1-9]|[A-H]|[J-N]|[P]|[R-T]|[V-Y]){1}(?:[0-9]|[A-H]|[J-N]|[P]|[R-Z]){1}[0-9]{6})\\b"
-    await search_redact(nivVehicule);
-
     
-    //patern numero permis de conduire
-    const permis = "/[1-9]{2}[ .]{0,1}(?:1[0-2]|0[0-9]{1})[ .]{0,1}[0-9]{2}[ .]{0,1}[0-9]{2}[ .]{0,1}[0-9]{4}/g"
-    await search_redact(permis);
+      //Pattern1 : pattern pour le numero de telephone en Belgique
+    let pattern1 =
+    {
+        name: "Numero",
+        patern:  "[+]3{1}2{1}+[ ]{0,1}+[.]{0,1}+[-]{0,1}+\\d{1}+[ ]{0,1}+[.]{0,1}+[-]{0,1}+\\d{3}+[ ]{0,1}+[-]{0,1}+[.]{0,1}+\\d{2}+[ ]{0,1}+[.]{0,1}+[-]{0,1}+\\d{2}+\\d{0,1}"
+    }
+      await search_redact(pattern1);
+      //Pattern2 : pattern pour l'email 
+    let pattern2 =
+    {
+        name: "Email",
+        patern:  "[a-zA-Z0-9._%+-]+[a-zA-Z0-9._%+-]+@[A-z]+[a-zA-Z0-9._%+-]+[a-zA-Z]"
+    }
+        ;
+      await search_redact(pattern2);
+      //Pattern 3 : pattern pour le numero tva
+    let pattern3 =
+    {
+        name: "N° TVA",
+        patern:"[A-Z]{2}[ ]{0,1}[0-9]{4}[^A-Za-z0-9_]{0,1}[0-9]{3}[^A-Za-z0-9_]{0,1}[0-9]{3}"
+    }
+      await search_redact(pattern3);
+      //Pattern 4: pattern pour le IBAN
+    let pattern4 =
+    {
+        name: "N° IBAN",
+        patern:"[A-Z]{2}[0-9]{2}[ ]{0,1}[0-9]{4}[ ]{0,1}[0-9]{4}[ ][0-9]{4}[ ][A-Z0-9]{8}"
+    }
+      await search_redact(pattern4);
+      //Pattern 5 : pattern IBAN2
+    let pattern5 =
+    {
+        name: "N° IBAN",
+        patern:"[A-Z]{2}[0-9]{14}"
+    }
+      await search_redact(pattern5);
+      //patern numero CIN
+    const cin =
+    {
+        name: "N° IDENTITY NATIONAL",
+        patern:"[0-9]{2}[.](?:1[0-2]|0[0-9]{1})[.](?:3[0-1]|0[1-9]{1}|2[0-9]{1})-[0-9]{3}[.][0-9]{2}"
+    }  
+      await search_redact(cin);
+      // //identification passport
+    const passport =
+    {
+        name: "N° PASSPORT",
+        patern:"\\b(?:[A-Z]{2}[0-9]{6})\\b"
+    }   
+      await search_redact(passport);
+      //numero voiture
+    const numVoiture =
+    {
+        name: "N° PLAQUE VOITURE",
+        patern:"\\b(?:[1-8]{1}[-][A-Y]{1}[A-Z]{2}[-][0-9]{3})\\b"
+    }  
+      await search_redact(numVoiture);
+      //NIV voiture
+    const nivVehicule =
+    {
+        name: "NIV Vehicule",
+        patern:"\\b(?:(?:[0-9]|[A-H]|[J-N]|[P]|[R-Z]){8}(?:[0-9]|[X]){1}(?:[1-9]|[A-H]|[J-N]|[P]|[R-T]|[V-Y]){1}(?:[0-9]|[A-H]|[J-N]|[P]|[R-Z]){1}[0-9]{6})\\b"
+    }  
+      await search_redact(nivVehicule);
+      //patern numero permis de conduire
+    const permis =
+    {
+        name: "N° PERMIS",
+        patern:"/[1-9]{2}[ .]{0,1}(?:1[0-2]|0[0-9]{1})[ .]{0,1}[0-9]{2}[ .]{0,1}[0-9]{2}[ .]{0,1}[0-9]{4}/g"
+    }  
+      await search_redact(permis);
+      //identificaiton employer
+    const employer =
+    {
+        name: "EMPLOYER",
+        patern:"\\b(?:[1-9]{1}[0-9]{11})\\b"
+    }  
+      await search_redact(employer);
+      //url patern
+    let url_patern =
+    {
+        name: "SITE",
+        patern:"(?:[https:\/\/www.|http:\/\/www.|https:\/\/|http:\/\/|www]+[.]+[a-zA-Z0-9._%+-\/]+[a-zA-Z0-9._%+-])"
+    }  
+      await search_redact(url_patern);
     
-    //identificaiton employer
-    const employer = "\\b(?:[1-9]{1}[0-9]{11})\\b"
-    await search_redact(employer);
-
-    //url patern
-    let url_patern = "(?:[https:\/\/www.|http:\/\/www.|https:\/\/|http:\/\/|www]+[.]+[a-zA-Z0-9._%+-\/]+[a-zA-Z0-9._%+-])"
-    await search_redact(url_patern);
-
     var inputPath_redacted = pdffile; // pdf a chercher
     var inputPath_clickable = pdffile; // pdf a chercher
     //Fonction pour chercher un mot dans le pdf
@@ -267,7 +315,7 @@ async function create_redaction(pdffile) {
                 doc.lock();
                 const txtSearch = await PDFNet.TextSearch.create();
                 let mode = (PDFNet.TextSearch.Mode.e_whole_word | PDFNet.TextSearch.Mode.e_highlight) + PDFNet.TextSearch.Mode.e_reg_expression;
-                txtSearch.begin(doc, pattern, mode);
+                txtSearch.begin(doc, pattern.patern, mode);
                 let result = await txtSearch.run();
                 while (true) {
 
@@ -283,8 +331,8 @@ async function create_redaction(pdffile) {
                                 const x2 = Math.max(Math.max(Math.max(currQuad.p1x, currQuad.p2x), currQuad.p3x), currQuad.p4x);
                                 const y1 = Math.min(Math.min(Math.min(currQuad.p1y, currQuad.p2y), currQuad.p3y), currQuad.p4y);
                                 const y2 = Math.max(Math.max(Math.max(currQuad.p1y, currQuad.p2y), currQuad.p3y), currQuad.p4y);
-                                redact_create(x1, y1, x2, y2, result.page_num); //Mettre un redact dans le coordonnée designé
-                                button_create(x1, y1, x2, y2, result.page_num); //Mettre un masque clickable dans le coordonnée designé
+                                redact_create(x1, y1, x2, y2, result.page_num,pattern.name); //Mettre un redact dans le coordonnée designé
+                                button_create(x1, y1, x2, y2, result.page_num,pattern.name); //Mettre un masque clickable dans le coordonnée designé
                                 break;
                             }
                             hlts.next();
@@ -305,25 +353,28 @@ async function create_redaction(pdffile) {
                 console.log(err);
             }
             //Fonction pour redacter
-            function redact_create(x1, y1, x2, y2, page_num) {
+            function redact_create(x1, y1, x2, y2, page_num,name) {
                 ((exports) => {
                     exports.runPDFRedactTest = () => {
                         const main = async() => {
                             try {
                                 const doc = await PDFNet.PDFDoc.createFromFilePath(inputPath_redacted);
                                 doc.initSecurityHandler();
-                                const redactionArray = []; // we will contain a list of redaction objects in this array
-                                redactionArray.push(await PDFNet.Redactor.redactionCreate(page_num, (await PDFNet.Rect.init(x1, y1, x2, y2)), false, ''));
-                                const appear = {};
-                                appear.redaction_overlay = true;
-                                const black = await PDFNet.ColorPt.init(0.0, 0.0, 0.0, 0);
-                                appear.positive_overlay_color = black;
-                                appear.border = false;
-                                const timesFont = await PDFNet.Font.create(doc, PDFNet.Font.StandardType1Font.e_times_roman);
-                                appear.font = timesFont;
-                                appear.show_redacted_content_regions = true;
-                                PDFNet.Redactor.redact(doc, redactionArray, appear, false, false);
-                                // output
+                                
+
+                                
+                                const blankPage = await doc.getPage(page_num);
+                                const btn_field = await doc.fieldCreate("button." + numBtn, PDFNet.Field.Type.e_button);
+                                const btnbox = await PDFNet.PushButtonWidget.createWithField(doc, await PDFNet.Rect.init(x1, y1, x2, y2), btn_field);
+                                btnbox.setBackgroundColor(await PDFNet.ColorPt.init(0, 0, 0), 1);
+                                fields = ["button." + numBtn];
+                                //await btnbox.setAction(await PDFNet.Action.createHideField(doc, fields));
+                                btnbox.setStaticCaptionText(name)
+                                btnbox.refreshAppearance();
+                                blankPage.annotPushBack(btnbox);
+
+                                numBtn++;
+
                                 await doc.save(pdfpath_redacted, PDFNet.SDFDoc.SaveOptions.e_linearized);
                                 inputPath_redacted = pdfpath_redacted;
                             } catch (err) {
@@ -341,7 +392,7 @@ async function create_redaction(pdffile) {
             }
             
             // Fonction pour creer un bouton
-            function button_create(x1, y1, x2, y2, page_num) {
+            function button_create(x1, y1, x2, y2, page_num,name) {
                 ((exports) => {
 
                     exports.runPDFRedactTest = () => {
@@ -357,6 +408,7 @@ async function create_redaction(pdffile) {
                                 btnbox.setBackgroundColor(await PDFNet.ColorPt.init(0, 0, 0), 1);
                                 fields = ["button." + numBtn];
                                 await btnbox.setAction(await PDFNet.Action.createHideField(doc, fields));
+                                btnbox.setStaticCaptionText(name)
                                 btnbox.refreshAppearance();
                                 blankPage.annotPushBack(btnbox);
 
