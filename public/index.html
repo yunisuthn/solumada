@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>PDF Redactor</title>
-    <!-- <link rel="stylesheet" href="css/bootstrap.min.css"> -->
+    <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/_style.css">
     <link rel="stylesheet" href="css/all.min.css">
@@ -25,8 +25,10 @@
                     </div>
                     <div class="text-center inputs">
                         <input type="button" class="select-button" value="SELECTIONNER UN DOSSIER">
-                        <input type="file" id="uploadFile" name="filetoupload" class="custom-inputFile" webkitdirectory directory multiple>
-                        <button id="redactFile" name="btn1" class="launchButton" style="display:none;">Démarrer le traitement</button>
+                        <input type="file" id="uploadFile" name="filetoupload" class="custom-inputFile" webkitdirectory
+                            directory multiple>
+                        <button id="redactFile" name="btn1" class="launchButton" style="display:none;">Démarrer le
+                            traitement</button>
                     </div>
                     <div class="fileNameField">
                         <p style="display:none;">Fichier : <span class="selectedFileName">Aucun fichier</span></p s>
@@ -36,25 +38,31 @@
             </div>
         </form>
     </div>
+
+    <ul class="nav justify-content-end">
+        <li class="nav-item">
+            <a class="nav-link" href="/post">Entrez le nom et l'adresse</a>
+        </li>
+    </ul>
     <script src='js/jquery.min.js'></script>
     <script type='text/javascript'>
-        (function() {
+        (function () {
             const selectedFileName = document.querySelector('.selectedFileName');
             const fileNameField = document.querySelector('.fileNameField > p');
             const inputFile = document.querySelector('#uploadFile');
             const redactButton = document.querySelector('#redactFile');
             const buttonSelect = document.querySelector('.select-button');
-            buttonSelect.addEventListener('click', function(e) {
+            buttonSelect.addEventListener('click', function (e) {
                 inputFile.click();
                 e.preventDefault();
             });
             var active_button = false;
             activeButtons(active_button);
             // event listener
-            inputFile.addEventListener('change', function() {
+            inputFile.addEventListener('change', function () {
                 let countPDF = 0;
                 active_button = false;
-                Array.from(inputFile.files).forEach(function(file) {
+                Array.from(inputFile.files).forEach(function (file) {
                     countPDF += (file.type === 'application/pdf') ? 1 : 0;
                 });
                 if (countPDF > 1500) alert(`Le nombre de fichiers doit être inférieur à ou égal 1500.`);
@@ -67,7 +75,7 @@
                 activeButtons(active_button);
             });
             // traitement event listener
-            redactButton.addEventListener('click', function() {
+            redactButton.addEventListener('click', function () {
                 active_button = !active_button;
                 activeButtons(active_button);
                 document.querySelector('.charging').style.display = 'block';
