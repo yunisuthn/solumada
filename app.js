@@ -238,18 +238,18 @@ async function create_redaction(pdffile) {
         patern: "[A-Z]{2}[ ]{0,1}[0-9]{4}[^A-Za-z0-9_]{0,1}[0-9]{3}[^A-Za-z0-9_]{0,1}[0-9]{3}"
     }
     await search_redact(pattern3);
-    //Pattern 4: pattern for IBAN
-    let pattern4 =
-    {
-        name: "N° IBAN",
-        patern: "[A-Z]{2}[0-9]{2}[ ]{0,1}[0-9]{4}[ ]{0,1}[0-9]{4}[ ][0-9]{4}[ ][A-Z0-9]{8}"
-    }
-    await search_redact(pattern4);
-    //Pattern 5 : pattern IBAN2
+    //pattern for BIC  //"[A-Z]{6,6}[A-Z2-9][A-NP-Z0-9]([A-Z0-9]{3,3}){0,1}"
+    // let bic =
+    // {
+    //     name: "N° BIC",
+    //     patern: "[0-9a-z]{4}[a-z]{2}[0-9a-z]{2}([0-9a-z]{3})?\\z" 
+    // }
+    // await search_redact(bic);
+
     let pattern5 =
     {
         name: "N° IBAN",
-        patern: "[A-Z]{2}[0-9]{14}"
+        patern: "[A-Z]{2}[0-9]{2} ?\\d{4} ?\\d{4} ?\\d{4} ?(\\w{8})?"
     }
     await search_redact(pattern5);
     //patern number CIN
