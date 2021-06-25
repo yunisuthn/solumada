@@ -8,6 +8,24 @@ const os = require('os')
 var contentDisposition = require('content-disposition')
 const mysql = require('mysql')
 
+
+const express = require('express')
+const app = express()
+const cors = require('cors')
+const mongoose = require("mongoose")
+const config = require('./BD.js')
+const bodyParser = require('body-parser');
+
+mongoose.Promise = global.Promise
+mongoose.connect(config.DB, { userNewUrlParser: true }).then(
+    () => { console.log("Database is connected") },
+    err => { console.log('Can not connect to the database' + err) }
+)
+
+app.use(cors())
+app.use(bodyParser.urlencoded({ extended: true }))
+app.use(bodyParser.json())
+
 //Declaration des variables globales
 var FILE_NAME = ''; //variable pour stocker le nom de fichier a traiter
 var OUTPUT_FILE_NAME = ''; //variable pour stocker le nom de fichier traiter qui sort dans le dossier redacted files
@@ -55,16 +73,20 @@ http.createServer(function (req, res) {
 
     if (req.url == "/parametre" && req.method == "POST") {
 
+        console.log("data " + donne);
         req.on('data', (data) => {
             //empty donne variable before push in
+            console.log("data  === " + data);
             if (donne.length > 0) {
                 for (let index = donne.length; index > 0; index--) {
                     donne.pop()
                 }
             }
+
             var data1 = JSON.parse(data)
             for (let i = 0; i < data1.length; i++) {
                 donne.push(data1[i])
+                console.log("data1 iii  !!!! " +JSON.stringify(data1[i]) );
             }
         })
 
@@ -83,19 +105,19 @@ http.createServer(function (req, res) {
             res.end(data);
         });
 
-        var path_click = 'Downloads/zip/Clickable.zip'
-        // //Set require Header
-        // // Request headers you wish to allow
-        res.setHeader('Content-Type', 'application/zip')
-        res.setHeader('Content-Disposition', contentDisposition(path_click))
-        // // send file
-        async function starting(params) {
-            var stream1 = fs.createReadStream(path_click)
-            await stream1.pipe(res)
-            await stream1.on('close', () => {
-                stream1.destroy()
-            })
-        }
+        // var path_click = 'Downloads/zip/Clickable.zip'
+        // // //Set require Header
+        // // // Request headers you wish to allow
+        // res.setHeader('Content-Type', 'application/zip')
+        // res.setHeader('Content-Disposition', contentDisposition(path_click))
+        // // // send file
+        // async function starting(params) {
+        //     var stream1 = fs.createReadStream(path_click)
+        //     await stream1.pipe(res)
+        //     await stream1.on('close', () => {
+        //         stream1.destroy()
+        //     })
+        // }
     }
     //Quand l'utilisateur click sur le bouton traitement l'url / fileupload va etre demander
     if (req.url == '/fileupload') {
@@ -258,81 +280,76 @@ http.createServer(function (req, res) {
 }).listen(PORT); // port pour appeler le serveur app.js
 
 // PDF REDACTION
-const { PDFNet } = require('@pdftron/pdfnet-node');
-const { Console, dir } = require('console');
-const { RSA_NO_PADDING } = require('constants');
-const { name } = require('ejs');
+const { PDFNet } = require('@pdftron/pdfnet-node')
+
+const route = express.Router();
+let Users = require('./public/model/model')
 async function create_redaction(pdffile, cachedata) {
-
-    // var con = mysql.createConnection({
-    //     host: 'localhost',
-    //     user: 'root',
-    //     password: '',
-    //     database: "solumada"
-    // })
-
-    // con.connect(function (err) {
-    //     if (err) throw err
-    // })
-
     for (let index = 0; index < cachedata.length; index++) {
         let clef = cachedata[index].name
-        let sql = "";
+        console.log("clef == ", clef);
+        if (clef == "Nom" || clef == "Adresse" || clef == "Ville") {
+            if (clef == "Nom") {
+                try {
+                    let result = await Users.distinct('nom');
+                    result.forEach(async element => {
+                        if (element.length !== 0) {
+                            let nom =
+                            {
+                                name: "Noms",
+                                pattern: String(element)
+                            }
+                            await search_redact(nom);
+                        }
+                    });
+                    // res.json({
+                    //     sql
+                    // });
+                } catch (error) {
+                    logger.error(error);
+                    res.status(500).json({ details: error });
+                }
+            } else if (clef == "Adresse") {
+                try {
+                    let result = await Users.distinct('adresse');
+                    result.forEach(async r => {
+                        if (r.length !== 0) {
+                            let adresse =
+                            {
+                                name: "Adresse",
+                                pattern: String(r)
+                            }
+                            await search_redact(adresse);
+                        }
+                    });
+                } catch (error) {
+                    logger.error(error);
+                    res.status(500).json({ details: error });
+                }
+            } else if (clef == "Ville") {
+                try {
+                    let result = await Users.distinct('ville');
 
-        // if (clef == "Nom" || clef == "Adresse" || clef == "Ville") {
-
-        //     if (clef == "Nom") {
-        //         sql = "SELECT nom FROM users";
-        //         con.query(sql, (err, result) => {
-        //             if (err) throw err;
-        //             result.forEach(async element => {
-        //                 if (element.nom.length !== 0) {
-        //                     let nom =
-        //                     {
-        //                         name: "Noms",
-        //                         pattern: String(element.nom)
-        //                     }
-        //                     await search_redact(nom);
-        //                 }
-        //             });
-        //         });
-        //     } else if (clef == "Adresse") {
-        //         sql = "SELECT adresse FROM users";
-        //         con.query(sql, (err, result) => {
-        //             if (err) throw err;
-        //             result.forEach(async r => {
-        //                 if (r.adresse.length !== 0) {
-        //                     let adresse =
-        //                     {
-        //                         name: "Adresse",
-        //                         pattern: String(r.adresse)
-        //                     }
-        //                     await search_redact(adresse);
-        //                 }
-        //             });
-        //         });
-        //     } else if (clef == "Ville") {
-        //         sql = "SELECT ville FROM users";
-        //         con.query(sql, (err, result) => {
-        //             if (err) throw err;
-        //             result.forEach(async element => {
-        //                 if (element.ville.length !== 0) {
-        //                     let ville =
-        //                     {
-        //                         name: "Ville",
-        //                         pattern: String(element.ville)
-        //                     }
-        //                     await search_redact(ville);
-        //                 }
-        //             });
-
-        //         });
-        //     }
-        // } else {
+                    result.forEach(async element => {
+                        if (element.length !== 0) {
+                            let ville =
+                            {
+                                name: "Ville",
+                                pattern: String(element)
+                            }
+                            await search_redact(ville);
+                        }
+                    });
+                } catch (error) {
+                    logger.error(error);
+                    res.status(500).json({ details: error });
+                }
+            }
+        } else {
             await search_redact(cachedata[index]);
-        // }
+        }
     }
-    // con.end()
+    //con.end()
 
 
     var inputPath_redacted = pdffile; // pdf a chercher

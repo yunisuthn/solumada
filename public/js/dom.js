@@ -253,6 +253,7 @@
         var xmlh = new XMLHttpRequest()
         xmlh.open('POST', '/parametre');
         xmlh.setRequestHeader('Content-Type', 'application/json');
+        console.log("data dom == ", data);
         xmlh.send(data)
     }
 
